@@ -4,8 +4,7 @@ import reviewsModel from "./schema.js";
 import multer from "multer";
 
 import q2m from "query-to-mongo";
-
-
+import ProductModel from "../products/schema.js";
 
 const reviewsRouter = express.Router();
 
@@ -13,6 +12,9 @@ reviewsRouter.post("/", async (req, res, next) => {
   try {
     const newReview = new reviewsModel(req.body);
     const { _id } = await newReview.save();
+    await ProductModel.findByIdAndUpdate(req.body.productId, {
+      $push: { reviews: _id },
+    });
     res.status(201).send({ _id });
   } catch (error) {
     next(error);
@@ -22,12 +24,9 @@ reviewsRouter.post("/", async (req, res, next) => {
 reviewsRouter.get("/", async (req, res, next) => {
   try {
     const mongoQuery = q2m(req.query);
-    const total = await reviewsModel.countDocuments(mongoQuery.criteria);
-    const reviews = await reviewsModel
-      .find(mongoQuery.criteria)
-      .limit(mongoQuery.options.limit)
-      .skip(mongoQuery.options.skip)
-      .sort(mongoQuery.options.sort);
+    const { total, reviews } = await reviewsModel.findReviewsWithProducts(
+      mongoQuery
+    );
     res.send({
       links: mongoQuery.links("/reviews", total),
       total,
@@ -88,7 +87,4 @@ reviewsRouter.delete("/:ReviewId", async (req, res, next) => {
   }
 });
 
-
 export default reviewsRouter;
-
-

@@ -56,4 +56,44 @@ cartsRouter.post("/:ownerId/addToCart", async (req, res, next) => {
   }
 });
 
+cartsRouter.get("/:ownerId/products", async (req, res, next) => {
+  try {
+    const cart = await CartsModel.findById(req.params.ownerId);
+    if (blogPost) {
+      res.send(cart.products);
+    } else {
+      next(
+        createHttpError(
+          404,
+          `Cart with owner Id ${req.params.ownerId} not found!`
+        )
+      );
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+cartsRouter.delete("/:ownerId/products/:productId", async (req, res, next) => {
+  try {
+    const modifiedCart = await CartsModel.findByIdAndUpdate(
+      req.params.ownerId, //WHO
+      { $pull: { products: { _id: req.params.productId } } }, // HOW
+      { new: true } // OPTIONS
+    );
+    if (modifiedCart) {
+      res.send(modifiedCart);
+    } else {
+      next(
+        createHttpError(
+          404,
+          `Cart with Id owner ${req.params.ownerId} not found!`
+        )
+      );
+    }
+  } catch (error) {
+    next(error);
+  }
+}); 
+
 export default cartsRouter;

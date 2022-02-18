@@ -31,9 +31,11 @@ productsRouter.get("/", async (req, res, next) => {
     const total = await productsModel.countDocuments(mongoQuery.criteria);
     const products = await productsModel
       .find(mongoQuery.criteria)
+      .populate("reviews")
       .limit(mongoQuery.options.limit)
       .skip(mongoQuery.options.skip)
       .sort(mongoQuery.options.sort);
+
     res.send({
       links: mongoQuery.links("/products", total),
       total,
@@ -119,11 +121,11 @@ productsRouter.post(
   }
 );
 
-productsRouter.get("/:ProductId/comments", async (req, res, next) => {
+productsRouter.get("/:ProductId/reviews", async (req, res, next) => {
   try {
     const Product = await productsModel.findById(req.params.ProductId);
     if (Product) {
-      res.send(Product.comments);
+      res.send(Product.reviews);
     } else {
       next(
         createHttpError(
@@ -136,7 +138,5 @@ productsRouter.get("/:ProductId/comments", async (req, res, next) => {
     next(error);
   }
 });
-
-
 
 export default productsRouter;
